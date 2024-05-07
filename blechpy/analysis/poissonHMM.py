@@ -667,6 +667,7 @@ def fit_hmm_mp(rec_dir, params, h5_file=None, constraint_func=None):
     channels = params['channel']
     tastes = params['taste']
     n_trials = params['n_trials']
+    unit_names = params['unit_names']
     if params.get('trial_nums') is not None:
         custom_trial_nums = params.pop('trial_nums')
     else:
@@ -693,13 +694,13 @@ def fit_hmm_mp(rec_dir, params, h5_file=None, constraint_func=None):
             tmp_s, _, time = get_hmm_spike_data(rec_dir, unit_type, ch,
                                                 time_start=time_start,
                                                 time_end=time_end, dt=dt,
-                                                trials=n_trials, area=area)
+                                                trials=n_trials, area=area, unit_names=unit_names)
             tmp_id = np.vstack([(hmm_id, ch, tst, x) for x in range(tmp_s.shape[0])])
         else:
             tmp_s, _, time = get_hmm_spike_data(rec_dir, unit_type, ch,
                                                 time_start=time_start,
                                                 time_end=time_end, dt=dt,
-                                                trials=custom_trial_nums, area=area)
+                                                trials=custom_trial_nums, area=area, unit_names=unit_names)
             tmp_id = np.vstack([(hmm_id, ch, tst, x) for x in custom_trial_nums])
 
         spikes.append(tmp_s)
@@ -1371,7 +1372,8 @@ class HmmHandler(object):
                                                   time_end=params['time_end'],
                                                   dt=params['dt'],
                                                   trials=trials,
-                                                  area=params['area'])
+                                                  area=params['area'],
+                                                  unit_names = params['unit_names'])
             plot_dir = os.path.join(self.plot_dir, 'hmm_%s' % i)
             if not os.path.isdir(plot_dir):
                 os.makedirs(plot_dir)
@@ -1398,7 +1400,8 @@ class HmmHandler(object):
                                                   time_end=params['time_end'],
                                                   dt=params['dt'],
                                                   trials=trials,
-                                                  area=params['area'])
+                                                  area=params['area'],
+                                                  unit_names = params['unit_names'])
             plot_dir = os.path.join(self.plot_dir, 'hmm_%s' % i)
             if not os.path.isdir(plot_dir):
                 os.makedirs(plot_dir)
@@ -1901,7 +1904,8 @@ def package_project_data(hmm_df, save_file, **kwargs):
                                                             channel,
                                                             time_start=params['time_start'],
                                                             time_end=params['time_end'],
-                                                            area=params['area'])
+                                                            area=params['area'],
+                                                            unit_names=params['unit_names'])
                 hf5.create_array(path_str, 'spikes', spikes)
                 hf5.create_array(path_str, 'spike_time', spike_time)
 
