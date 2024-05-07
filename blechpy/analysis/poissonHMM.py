@@ -31,7 +31,7 @@ HMM_PARAMS = {'hmm_id': None, 'taste': None, 'channel': None,
               'unit_type': 'single', 'dt': 0.001, 'threshold': 1e-7,
               'max_iter': 200, 'n_cells': None, 'n_trials': None,
               'time_start': -250, 'time_end': 2000, 'n_repeats': 25,
-              'n_states': 3, 'fitted': False, 'converged': False, 'area': 'GC',
+              'n_states': 3, 'fitted': False, 'converged': False, 'area': 'GC', 'unit_names': None,
               'hmm_class': 'PoissonHMM', 'notes': ''}
 
 FACTORIAL_LOOKUP = np.array([math.factorial(x) for x in range(20)])  # tried increasing to 50, something bad happened
@@ -524,7 +524,7 @@ def rebin_spike_array(spikes, dt, time, new_dt):
 
 @memory.cache
 def get_hmm_spike_data(rec_dir, unit_type, channel, time_start=None,
-                       time_end=None, dt=None, trials=None, area=None):
+                       time_end=None, dt=None, trials=None, area=None, unit_names=None):
     '''Grabs spike data and formats it for HMM fitting. Handles rebinning and trimming spike arrays.
 
     Parameters
@@ -560,7 +560,7 @@ def get_hmm_spike_data(rec_dir, unit_type, channel, time_start=None,
 
     '''
     if isinstance(unit_type, str):
-        units = query_units(rec_dir, unit_type, area=area)
+        units = query_units(rec_dir, unit_type, area=area, unit_names=unit_names)
     elif isinstance(unit_type, list):
         units = unit_type
 
@@ -595,7 +595,7 @@ def get_hmm_spike_data(rec_dir, unit_type, channel, time_start=None,
 
 
 @memory.cache
-def query_units(dat, unit_type, area=None):
+def query_units(dat, unit_type, area=None, unit_names=None):
     '''Returns the units names of all units in the dataset that match unit_type
 
     Parameters
@@ -621,6 +621,9 @@ def query_units(dat, unit_type, area=None):
     else:
         units = dat.get_unit_table()
         el_map = dat.electrode_mapping.copy()
+
+    if unit_names is not None:
+        units = units[units['unit_name'].isin(unit_names)]
 
     u_str = unit_type.lower()
     q_str = ''
@@ -1543,7 +1546,7 @@ class HmmHandler(object):
                     hmm_ids.append(hid)
 
                 p['channel'] = dim.loc[t, 'channel']
-                unit_names = query_units(dat, p['unit_type'], area=p['area'])
+                unit_names = query_units(dat, p['unit_type'], area=p['area'], unit_names=p['unit_names'])
                 p['n_cells'] = len(unit_names)
 
                 data_params.append(p)
@@ -1578,7 +1581,7 @@ class HmmHandler(object):
                 hmm_ids.append(hid)
 
             unit_names = query_units(dat, p['unit_type'],
-                                     area=p['area'])
+                                     area=p['area'], unit_names=p['unit_names'])
             p['n_cells'] = len(unit_names)
 
             data_params.append(p)

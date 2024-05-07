@@ -1182,8 +1182,6 @@ class dataset(data_object):
             datplt.plot_trial_heat(dig_rates, time, save_file = save_file, title = taste)
 
 
-
-
     def make_ensemble_raster_plots(self):
         save_dir = os.path.join(self.root_dir, 'raster_plots')
         name = self.data_name
@@ -1384,6 +1382,42 @@ class dataset(data_object):
         tbl = tbl.explode(cols)
         
         return tbl
+
+    def remove_t0_spikes(self):
+        trials = dat.dig_in_trials
+        onidxs = trials['on_index'].array
+        onidxs = onidxs[::-1]
+
+        h5_file = dat.h5_file
+
+        # fixing the sorted unit arrays
+        h5 = tables.open_file(h5_file, mode='r+')
+        for unit in h5.root.sorted_units:
+            unm = unit._v_name
+            for bidx in badidxs:
+                times = h5.root.sorted_units[unm].times[:]
+                waves = h5.root.sorted_units[unm].waveforms[:]
+                t = times[(times > bidx - 30) & (times < bidx + 30)]
+                if len(t) > 0:
+                    idx = np.where(times == t)
+                    idx = idx[0][0]
+                    print(len(h5.root.sorted_units[unm].times[:]))
+                    newtimes = np.delete(times, idx)
+                    newwaveforms = np.delete(waves, idx, 0)
+                    h5.remove_node(h5.root.sorted_units[unm].times)
+                    h5.create_array(h5.root.sorted_units[unm], "times", newtimes)
+                    h5.remove_node(h5.root.sorted_units[unm].waveforms)
+                    h5.create_array(h5.root.sorted_units[unm], "waveforms", newwaveforms)
+
+        # fixing the spike arrays
+        h5 = tables.open_file(h5_file, mode='r+')
+        new_array = h5.root.spike_trains.dig_in_1.spike_array[:]
+        new_array[:, :, 2000] = 0
+        h5.remove_node(h5.root.spike_trains.dig_in_1.spike_array)
+        h5.create_array(h5.root.spike_trains.dig_in_1, "spike_array", new_array)
+
+        h5.flush()
+        h5.close()
 
 def run_joblib_process(process):
     res = process.run()
