@@ -21,7 +21,7 @@ from blechpy.utils import spike_sorting_GUI as ssg
 from scipy.ndimage import gaussian_filter1d
 import tables
 import scipy.io as sio
-import pyBAKS
+#import pyBAKS
 
 class dataset(data_object):
     '''Stores information related to an intan recording directory, allows
@@ -83,8 +83,8 @@ class dataset(data_object):
         return new_root
 
     @Logger('Initializing Parameters')
-    def initParams(self, data_quality='hp', 
-                   emg_port=None, emg_channels=None, 
+    def initParams(self, data_quality='hp',
+                   emg_port=None, emg_channels=None,
                    car_keyword=None, car_group_areas=None,
                    shell=False, dig_in_names=None, dig_out_names=None,
                    accept_params=False):
@@ -98,7 +98,7 @@ class dataset(data_object):
             keyword defining which default set of parameters to use to detect
             headstage disconnection during clustering
             default is 'clean'. Best practice is to run blech_clust as 'clean'
-            and re-run as 'noisy' if too many early cutoffs occurr. 
+            and re-run as 'noisy' if too many early cutoffs occurr.
             Alternately run as 'hp' (high performance)
             default parameter sets found in dio.defualts.clustering_params.json
         emg_port : str
@@ -110,7 +110,7 @@ class dataset(data_object):
         car_keyword : str
             Specifes default common average reference groups
             defaults are found in dio.defaults.CAR_params.json
-            'bilateral32' and 'bilateral64' are available keywords 
+            'bilateral32' and 'bilateral64' are available keywords
             If left as None (default) user will be queries to select common
             average reference groups
         shell : bool
@@ -626,8 +626,8 @@ class dataset(data_object):
         self.process_status['extract_data'] = True
         self.save()
         print('\nData Extraction Complete\n--------------------')
-        
-        
+
+
 
     @Logger('Creating Trial List')
     def create_trial_list(self):
@@ -888,8 +888,8 @@ class dataset(data_object):
 
             results = Parallel(n_jobs=n_cores, verbose=10)(delayed(run_joblib_process)
                                                           (co) for co in clust_objs)
-          
-                               
+
+
         else:
             results = []
             for x in clust_objs:
@@ -1077,10 +1077,10 @@ class dataset(data_object):
         if os.path.isdir(save_dir):
             shutil.rmtree(save_dir)
         os.mkdir(save_dir)
-        
-        
+
+
         dinmap = self.dig_in_mapping.query('spike_array ==True')
-        
+
         for i, row in unit_table.iterrows():
             un = row.unit_num
             if save_prefix is None:
@@ -1088,24 +1088,62 @@ class dataset(data_object):
             else:
                 save_file = os.path.join(save_dir,save_prefix+'unit_'+str(un)+'_PSTH.svg')
             datplt.plot_overlay_psth(rec_dir = self.root_dir, unit = un , plot_window=[-1500, 5000], bin_size = 500, sd = sd, din_map = dinmap, save_file=save_file)
-    
+
+    def make_unit_heat_plots(self, save_prefix=None):
+        unit_table = self.get_unit_table()
+        save_dir = os.path.join(self.root_dir, 'unit_heatmap_plots')
+        if os.path.isdir(save_dir):
+            shutil.rmtree(save_dir)
+        os.mkdir(save_dir)
+
+        dinmap = self.dig_in_mapping.query('spike_array ==True')
+
+        for i, row in unit_table.iterrows():
+            un = row.unit_num
+            if save_prefix is None:
+                save_file = os.path.join(save_dir, 'unit_' + str(un) + '_heatmap.svg')
+            else:
+                save_file = os.path.join(save_dir, save_prefix + 'unit_' + str(un) + '_heatmap.svg')
+            datplt.plot_unit_heatmaps(rec_dir=self.root_dir, unit=un,
+                                      din_map=dinmap, save_file=save_file)
+
+
+    def make_trialwise_raster_plots(self, sd = True, save_prefix = None):
+        unit_table = self.get_unit_table()
+        save_dir = os.path.join(self.root_dir, 'unit_trial_raster_plots')
+        if os.path.isdir(save_dir):
+            shutil.rmtree(save_dir)
+        os.mkdir(save_dir)
+
+        dinmap = self.dig_in_mapping.query('spike_array ==True')
+
+        for i, row in unit_table.iterrows():
+            un = row.unit_num
+            if save_prefix is None:
+                save_file = os.path.join(save_dir, 'unit_' + str(un) + '_PSTH.svg')
+            else:
+                save_file = os.path.join(save_dir, save_prefix + 'unit_' + str(un) + '_PSTH.svg')
+            datplt.plot_trialwise_raster(rec_dir=self.root_dir, unit=un, plot_window=[-5000, 5000], bin_size=500, sd=sd,
+                                     din_map=dinmap, save_file=save_file)
+
+
     def make_raster_plots(self):
-        '''make raster plots with electrode noise for each unit  
+        '''make raster plots with electrode noise for each unit
         '''
-        
+
         unit_table = self.get_unit_table()
         save_dir = os.path.join(self.root_dir, 'unit_raster_plots')
-        
+
         if os.path.isdir(save_dir):
             shutil.rmtree(save_dir)
         os.mkdir(save_dir)
         for i, row in unit_table.iterrows():
-            spike_times, _, _ = dio.h5io.get_unit_spike_times(self.root_dir, row['unit_name'], h5_file = self.h5_file) 
-            
+            spike_times, _, _ = dio.h5io.get_unit_spike_times(self.root_dir, row['unit_name'], h5_file = self.h5_file)
+
             waveforms, _, _ = dio.h5io.get_unit_waveforms(self.root_dir, row['unit_name'], h5_file = self.h5_file)
             save_file = os.path.join(save_dir, row['unit_name']+'_raster')
             datplt.plot_spike_raster([spike_times], [waveforms], save_file = save_file)
-            
+
         self.save()
 
     def make_trial_raster_plots(self):
@@ -1187,12 +1225,15 @@ class dataset(data_object):
         name = self.data_name
         save_file = os.path.join(save_dir, name+'_ensemble_raster')
         if os.path.isdir(save_dir):
-            shutil.rmtree(save_dir) 
-        os.mkdir(save_dir)     
-        
+            shutil.rmtree(save_dir)
+        os.mkdir(save_dir)
+
         datplt.plot_ensemble_raster(self,save_file)
-        
-        
+
+
+
+
+
     @Logger('Calculating Palatability/Identity Metrics')
     def palatability_calculate(self, shell=False):
         pal_analysis.palatability_identity_calculations(self.root_dir,
@@ -1237,7 +1278,7 @@ class dataset(data_object):
         '''
         unit_table = dio.h5io.get_unit_table(self.root_dir, h5_file=self.h5_file)
         return unit_table
-    
+
     def edit_unit_descriptor(self, unit_num, descriptor_key,descriptor_val):
         '''
         use this to edit unit table, i.e. if you made a mistake labeling a neuron in spike sorting
@@ -1296,38 +1337,38 @@ class dataset(data_object):
         self.units_similarity(shell=True)
         self.make_psth_arrays()
         self.make_raster_plots()
-        
+
     def export_TrialSpikeArrays2Mat(self):
         h5 = tables.open_file(self.h5_file,'r+')
         taste_dig_in = h5.list_nodes('/spike_trains')
         loops = len(taste_dig_in)
         tbl = {}
-        
+
         names = self.dig_in_mapping[self.dig_in_mapping['spike_array'] == True]['name']
         key = names.values.tolist()
         spike_arrs = np.zeros(loops,dtype=np.object)
-        
+
         for i in range(loops):
             if i < len(taste_dig_in):
                 spike_arrs[i] = taste_dig_in[i].spike_array[:]
-        
+
         nameparts = str.split(self.tbla_name, '_')
         tbl['ID'] = nameparts[0]
         tbl['tble'] = nameparts[-2]
         tbl['spikes'] = spike_arrs
         tbl['states'] = key
-        
+
         ff = os.path.join(self.root_dir, 'matlab_exports') #make variable with folder name (file folder)
-        
+
         if not os.path.exists(ff): #check if file folder exists, make if if not
             os.makedirs(ff)
             print("Directory created successfully")
-        
+
         fn = self.tbla_name+'.mat' #make file name
-        fp = os.path.join(ff, fn) #make file path 
+        fp = os.path.join(ff, fn) #make file path
         sio.savemat(fp,{'tbla':tbl}) #save tbla [tbl] with label "tbla", at file path fp
         print('spike trains successfully exported to '+fp)
-        
+
         h5.flush()
         h5.close()
 
@@ -1336,51 +1377,51 @@ class dataset(data_object):
         taste_dig_in = h5.list_nodes('/spike_trains')
         loops = len(taste_dig_in)
         tbl = {}
-        
+
         names = self.dig_in_mapping[self.dig_in_mapping['spike_array'] == True]['name'].copy()
         key = names.values.tolist()
         spike_arrs = np.zeros(loops,dtype=np.object)
-        
-        
+
+
         for i in range(loops):
             if i < len(taste_dig_in):
                 spike_arrs[i] = taste_dig_in[i].spike_array[:]
-                
+
         h5.flush()
         h5.close()
-        
+
         tbl['spikes'] = spike_arrs
         tbl['name'] = key
-        
+
         tbl = pd.DataFrame.from_dict(tbl)
         tbl = tbl.explode('spikes')
         tbl['din_trial'] = tbl.groupby(['name']).cumcount()
-        
+
         din_trls = self.dig_in_trials.copy()
         din_trls['din_trial'] = din_trls.groupby(['name']).cumcount()
-        
+
         tbl = tbl.merge(din_trls, how = 'left', on = ['din_trial','name'])
-        
+
         nameparts = str.split(self.data_name, '_')
         tbl['ID'] = nameparts[0]
         tbl['date'] = nameparts[-2]
         tbl['rec_dir'] = self.root_dir
-        
+
         unt_tbl = self.get_unit_table().copy()
         elec_tbl = self.electrode_mapping.copy()
         elec_tbl = elec_tbl.rename(columns = {'Electrode':'electrode'})
         elec_tbl = elec_tbl[['electrode','area']]
-        unt_tbl = unt_tbl.merge(elec_tbl, how = 'left', on = 'electrode') 
-        
+        unt_tbl = unt_tbl.merge(elec_tbl, how = 'left', on = 'electrode')
+
         unt_tbl = unt_tbl.apply(lambda x: [x.tolist()], axis = 0)
         unt_tbl = pd.concat([unt_tbl]*len(tbl), ignore_index = True)
-        
+
         cols = ['unit_num','electrode','regular_spiking','fast_spiking', 'area']
         tbl[cols] = unt_tbl[cols]
-        
+
         cols.append('spikes')
         tbl = tbl.explode(cols)
-        
+
         return tbl
 
     def remove_t0_spikes(self):
@@ -1457,7 +1498,7 @@ def port_in_dataset(rec_dir=None, shell=False):
     if os.path.isfile(info_rhd):
         dat.initParams(shell=shell)
     else:
-        raise FileNotFoundError(f'{info_rhd} is required for proper dataset creation') 
+        raise FileNotFoundError(f'{info_rhd} is required for proper dataset creation')
 
     status = dat.process_status
 

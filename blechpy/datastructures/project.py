@@ -218,6 +218,12 @@ class project(data_object):
             dat = load_dataset(row['rec_dir'])
             dat.make_ensemble_raster_plots()
 
+    def make_unit_heatmaps(self):
+        rec_info = self.rec_info
+        for i, row in rec_info.iterrows():
+            dat = load_dataset(row['rec_dir'])
+            dat.make_unit_heat_plots()
+
     def make_rate_arrays(self, overwrite=True, parallel=False, n_jobs=-1):
         rec_info = self.rec_info
         def run_make_rate_arrays(rec_dir):

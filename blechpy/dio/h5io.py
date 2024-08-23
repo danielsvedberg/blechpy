@@ -193,7 +193,12 @@ def read_files_into_arrays(file_name, rec_info, electrode_mapping, emg_mapping,
         hf5.root.raw.amplifier_time.append(time[:])
         print('Done!')
 
-        # Read in digital input data if it exists
+        # # Read in digital input data if it exists
+        # if rec_info.get('dig_in_names') is not None:
+        #     #extract the number from the string
+        #     dig_in_nums = [int(re.findall(r'\d+', x)[0]) for x in rec_info['dig_in_names']]
+        #     read_in_digital_signal(hf5, file_dir, file_type,
+        #                            dig_in_nums, 'in')
         if rec_info.get('dig_in') is not None:
             read_in_digital_signal(hf5, file_dir, file_type,
                                    rec_info['dig_in'], 'in')

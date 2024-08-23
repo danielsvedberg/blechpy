@@ -108,6 +108,7 @@ def make_psths_for_tastant(h5_file, win_size, win_step, dig_in_ch, smoothing_wid
         hf5.flush()
 
     return PSTHs, psth_time
+#TODO: make_psths_for_tastant errors out when din is empty/has no activity
 
 def make_rate_arrays(h5_file, dinlist, mode='BAKS', output=False):
     if mode == 'BAKS':
@@ -123,17 +124,18 @@ def make_rate_arrays(h5_file, dinlist, mode='BAKS', output=False):
                 time = spike_data.array_time[:]
                 dinidx = np.ones(spike_array.shape[1]) * i
                 dinidxs.append(dinidx)
+            hf5.flush()
 
         full_spike_array = np.concatenate((spike_arrays), axis=1)
+        del spike_array, spike_arrays
         full_dinidx = np.concatenate((dinidxs))
         full_dinidx = full_dinidx.astype(int)
-
         #make array "rates" with the same shape as spike_array
-        results=Parallel(n_jobs=-1)(
-            delayed(pyBAKS.optimize_alpha_MLE)(full_spike_array[i,:,:], time, dt=0.001, output_df=False) for i in range(full_spike_array.shape[0])
-        ) #TODO remove hard coded dt
+        results=Parallel(n_jobs=6)(
+            delayed(pyBAKS.optimize_alpha_MLE)(full_spike_array[i,:,:], time, dt=0.001, output_df=False, kind=np.ndarray, ndim=2) for i in range(full_spike_array.shape[0])) #TODO remove hard coded dt
 
         rates = np.zeros(full_spike_array.shape)
+        del full_spike_array
         i = 0
         for tmp, _ in results:
             rates[i,:,:] = tmp

@@ -200,6 +200,85 @@ def plot_overlay_psth(rec_dir, unit, din_map, plot_window=[-1500, 2500],
     print(save_file)
     plt.close('all')
 
+def plot_trialwise_raster(rec_dir, unit, din_map, plot_window=[-1500, 2500],
+                      bin_size=250, bin_step=25, sd = True, dig_ins=None, smoothing_width=3,
+                      save_file=None):
+    if isinstance(unit, str):
+        unit = dio.h5io.parse_unit_number(unit)
+
+    if dig_ins is None:
+        dig_ins = din_map.query('spike_array==True').channel.values
+
+    if save_file is None:
+        save_dir = os.path.join(rec_dir, 'Overlay_PSTHs')
+        save_file = os.path.join(save_dir, 'Overlay_PSTH_unit%03d' % unit)
+        if not os.path.isdir(save_dir):
+            os.mkdir(save_dir)
+
+    for din in dig_ins:
+        name = din_map.query('channel==@din').name.values[0]
+        time, spike_train = dio.h5io.get_spike_data(rec_dir, unit, din)
+        psth_time, fr = sas.get_binned_firing_rate(time, spike_train, bin_size, bin_step)
+        ntrials = fr.shape[0]
+        fig, axs = plt.subplots(ntrials, 1, figsize=(20, 15), sharex=True, sharey=True)
+        for trial in range(ntrials):
+            ax = axs[trial]
+            rate = fr[trial]
+            ax.imshow(rate[np.newaxis,:], aspect='auto')
+            ax.axvline(np.where(psth_time == 0)[0], color='red', linestyle='--')
+            #x ticks should be time
+            if trial == ntrials-1:
+                ax.set_xticks(np.arange(0, len(psth_time), 100))
+                ax.set_xlabel('Time (ms)')
+            ax.set_ylabel('Trial %i' % trial)
+        #include a suptitle with the name and the unit number
+        fig.suptitle(name + ' Unit ' + str(unit))
+        fig.savefig(save_file + name + '.png')
+        plt.tight_layout()
+        plt.close('all')
+
+def plot_unit_heatmaps(rec_dir, unit, din_map, save_file):
+    if isinstance(unit, str):
+        unit = dio.h5io.parse_unit_number(unit)
+
+    if save_file is None:
+        save_dir = os.path.join(rec_dir, 'unit_heatmaps')
+        save_file = os.path.join(save_dir, 'heatmap_unit%03d' % unit)
+        if not os.path.isdir(save_dir):
+            os.mkdir(save_dir)
+
+    din_map = din_map.query("name!='Spont'")
+    n_tastes = len(din_map)
+    dins = din_map.channel.values
+    title = 'Unit %i' % unit
+    fig, axs = plt.subplots(1, n_tastes, figsize=(12,8), sharex=True, sharey=True)
+    for din in dins:
+        ax = axs[din]
+        name = din_map.query('channel==@din').name.values[0]
+        time, rates = dio.h5io.get_psths(rec_dir, unit, din)
+        #get all values of time where time is
+
+        ax.imshow(rates, aspect='auto')
+        time = time/1000
+        labs = np.array([-2.0,0.0,2.0, 4.0])
+        #get indices in time where time == labs
+        idx = np.where(np.isin(time, labs))[0]
+        ax.set_xticks(idx)
+        ax.set_xticklabels(labs)
+        ax.set_title(name)
+        if din == 0:
+            ax.set_ylabel('Trial')
+        ax.set_xlabel('Time (s)')
+
+    plt.tight_layout()
+
+    if save_file:
+        fig.savefig(save_file)
+        plt.close(fig)
+        return
+    else:
+        return fig, axes
+
 
 def plot_J3s(intra_J3, inter_J3, save_dir, percent_criterion):
     print('\n----------\nPlotting J3 distribution\n----------\n')

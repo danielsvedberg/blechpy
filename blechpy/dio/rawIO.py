@@ -76,8 +76,13 @@ def read_rec_info(file_dir, shell=True):
 
     if info.get('board_dig_in_channels'):
         dig_in = info['board_dig_in_channels']
-        din = [x['native_order'] for x in dig_in]
-        out['dig_in'] = din
+        #din = [x['native_order'] for x in dig_in]
+        #out['dig_in'] = din
+        #modified may 03 2024 to get custom channel names instead of native order
+        dins = [x['custom_channel_name'] for x in dig_in]
+        #extract the number in each channel name, convert to int
+        dins = [int(re.search(r'\d+', x).group()) for x in dins]
+        out['dig_in'] = dins
 
     if info.get('board_dig_out_channels'):
         dig_out = info['board_dig_out_channels']
