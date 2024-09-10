@@ -1087,7 +1087,24 @@ class dataset(data_object):
                 save_file = os.path.join(save_dir,'unit_'+str(un)+'_PSTH.svg')
             else:
                 save_file = os.path.join(save_dir,save_prefix+'unit_'+str(un)+'_PSTH.svg')
-            datplt.plot_overlay_psth(rec_dir = self.root_dir, unit = un , plot_window=[-1500, 5000], bin_size = 500, sd = sd, din_map = dinmap, save_file=save_file)
+            datplt.plot_overlay_psth(rec_dir = self.root_dir, unit = un , plot_window=[-1000, 3000], bin_size = 500, sd = sd, din_map = dinmap, save_file=save_file)
+
+    def make_split_psth_plots(self, sd = True, save_prefix = None):
+        unit_table = self.get_unit_table()
+        save_dir = os.path.join(self.root_dir,'trial_split_psth_plots')
+        if os.path.isdir(save_dir):
+            shutil.rmtree(save_dir)
+        os.mkdir(save_dir)
+
+        dinmap = self.dig_in_mapping.query('spike_array ==True')
+
+        for i, row in unit_table.iterrows():
+            un = row.unit_num
+            if save_prefix is None:
+                save_file = os.path.join(save_dir,'unit_'+str(un)+'_trial_split_PSTH.svg')
+            else:
+                save_file = os.path.join(save_dir,save_prefix+'unit_'+str(un)+'_PSTH.svg')
+            datplt.plot_trial_split_psth(rec_dir = self.root_dir, unit = un , plot_window=[-1000, 3000], bin_size = 500, sd = sd, din_map = dinmap, save_file=save_file)
 
     def make_unit_heat_plots(self, save_prefix=None):
         unit_table = self.get_unit_table()

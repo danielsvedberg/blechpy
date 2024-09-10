@@ -223,6 +223,19 @@ class project(data_object):
         for i, row in rec_info.iterrows():
             dat = load_dataset(row['rec_dir'])
             dat.make_unit_heat_plots()
+    
+    def make_split_psth_plots(self, parallel=True):
+        rec_info = self.rec_info
+        def datfun(rec_dir):
+            dat = load_dataset(rec_dir)
+            dat.make_split_psth_plots()
+
+        if parallel==True:
+            Parallel(n_jobs=-1)(delayed(datfun)(i) for i in rec_info.rec_dir)
+        else:
+            for i, row in rec_info.iterrows():
+                dat = load_dataset(row['rec_dir'])
+                dat.make_split_psth_plots()
 
     def make_rate_arrays(self, overwrite=True, parallel=False, n_jobs=-1):
         rec_info = self.rec_info
@@ -238,6 +251,8 @@ class project(data_object):
                 run_make_rate_arrays(i)
         elif parallel==True:
             Parallel(n_jobs=n_jobs)(delayed(run_make_rate_arrays)(i) for i in rec_dirs)
+
+
             
     #idk if this would actually work, I will need to figure this one out
     def apply_dat_function(self, function):

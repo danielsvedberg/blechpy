@@ -622,7 +622,7 @@ def query_units(dat, unit_type, area=None, unit_names=None):
         units = dat.get_unit_table()
         el_map = dat.electrode_mapping.copy()
 
-    if unit_names is not None:
+    if unit_names is not None and unit_names is not 'None':
         units = units[units['unit_name'].isin(unit_names)]
 
     u_str = unit_type.lower()

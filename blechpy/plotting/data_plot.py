@@ -179,6 +179,7 @@ def plot_overlay_psth(rec_dir, unit, din_map, plot_window=[-1500, 2500],
 
         t_idx = np.where((psth_time >= plot_window[0]) & (psth_time <= plot_window[1]))[0]
         psth_time = psth_time[t_idx]
+        psth_time = psth_time/1000 #convert to seconds
         mean_fr = mean_fr[t_idx]
         sem_fr = sem_fr[t_idx]
         mean_fr = gaussian_filter1d(mean_fr, smoothing_width)
@@ -189,7 +190,7 @@ def plot_overlay_psth(rec_dir, unit, din_map, plot_window=[-1500, 2500],
         ax.plot(psth_time, mean_fr, linewidth=3, label=name)
 
     ax.set_title('Peri-stimulus Firing Rate Plot\nUnit %i' % unit, fontsize=34)
-    ax.set_xlabel('Time (ms)', fontsize=28)
+    ax.set_xlabel('Time (s)', fontsize=28)
     ax.set_ylabel('Firing Rate (Hz)', fontsize=28)
     plt.xticks(fontsize=18)
     plt.yticks(fontsize=18)
@@ -199,6 +200,87 @@ def plot_overlay_psth(rec_dir, unit, din_map, plot_window=[-1500, 2500],
     fig.savefig(save_file)
     print(save_file)
     plt.close('all')
+
+
+def plot_trial_split_psth(rec_dir, unit, din_map, plot_window=[-1500, 2500],
+                      bin_size=250, bin_step=25, sd=True, dig_ins=None, smoothing_width=3,
+                      save_file=None):
+    '''
+    Plots overlayed PSTHs for all tastants or a specified subset
+
+    Parameters
+    ----------
+    rec_dir: str
+    unit: int
+    plot_window: list of int, time window for plotting in ms
+    bin_size: int, window size for binning spikes in ms
+    bin_step: int, step size for binning spikes in ms
+    dig_ins: list of int (optional)
+        which digital inputs to plot PSTHs for, None (default) plots all
+    save_file: str (optional), full path to save file, if None, saves in Overlay_PSTHs subfolder
+    '''
+    if isinstance(unit, str):
+        unit = dio.h5io.parse_unit_number(unit)
+
+    if dig_ins is None:
+        dig_ins = din_map.query('spike_array==True').channel.values
+    #remove 'dig_in_4' from dig_ins
+    dig_ins = dig_ins[dig_ins != 4]
+
+    if save_file is None:
+        save_dir = os.path.join(rec_dir, 'trial_split_PSTHs')
+        save_file = os.path.join(save_dir, 'trial_split_PSTH_unit%03d' % unit)
+        if not os.path.isdir(save_dir):
+            os.mkdir(save_dir)
+
+    trial_bins = ['1-10', '11-20', '21-30']
+    fig, axs = plt.subplots(1,3, figsize=(25, 10), sharex=True, sharey=True)
+    #plt.tick_params(axis='both', which='major', labelsize=22)
+    print('yay')
+    for din in dig_ins:
+        name = din_map.query('channel==@din').name.values[0]
+        time, spike_train = dio.h5io.get_spike_data(rec_dir, unit, din)
+        for i in [0,1,2]:
+            if i == 0:
+                spikes = spike_train[0:10, :]
+            elif i == 1:
+                spikes = spike_train[10:20, :]
+            else:
+                spikes = spike_train[20:, :]
+
+            psth_time, fr = sas.get_binned_firing_rate(time, spikes, bin_size, bin_step)
+            mean_fr = np.mean(fr, axis=0)
+            sem_fr = sem(fr, axis=0)
+            mean_fr = gaussian_filter1d(mean_fr, smoothing_width)
+            sem_fr = gaussian_filter1d(sem_fr, smoothing_width)
+
+            t_idx = np.where((psth_time >= plot_window[0]) & (psth_time <= plot_window[1]))[0]
+            psth_time = psth_time[t_idx]
+            psth_time = psth_time/1000 #convert to seconds
+            mean_fr = mean_fr[t_idx]
+            sem_fr = sem_fr[t_idx]
+
+            ax = axs[i]
+            if sd == True:
+                ax.fill_between(psth_time, mean_fr - sem_fr, mean_fr + sem_fr, alpha=0.3)
+
+            ax.plot(psth_time, mean_fr, linewidth=3, label=name)
+            ax.axvline(0, color='red', linestyle='--')
+            ax.set_title('Trials %s' % trial_bins[i])
+            ax.tick_params(axis='both', which='major', labelsize=22)
+            #ax.autoscale(enable=True, axis='x', tight=True)
+            if i == 2:
+                ax.legend(loc='best', fontsize=23)
+            if i == 0:
+                ax.set_ylabel('Firing Rate (Hz)', fontsize=28)
+            ax.set_xlabel('Time (s)', fontsize=28)
+
+    fig.suptitle('Peri-stimulus Firing Rate Plot Unit %i' % unit, fontsize=34)
+    fig.tight_layout(rect=[0, 0.03, 1, 0.925])
+    fig.savefig(save_file, format='svg')
+    print(save_file)
+    plt.close('all')
+
 
 def plot_trialwise_raster(rec_dir, unit, din_map, plot_window=[-1500, 2500],
                       bin_size=250, bin_step=25, sd = True, dig_ins=None, smoothing_width=3,
@@ -256,12 +338,19 @@ def plot_unit_heatmaps(rec_dir, unit, din_map, save_file):
         ax = axs[din]
         name = din_map.query('channel==@din').name.values[0]
         time, rates = dio.h5io.get_psths(rec_dir, unit, din)
+        #get indices where time is between -1000 and 3000
+        tidx = np.where((time >= -1000) & (time <= 3000))[0]
+        time = time[tidx]
+        rates = rates[:, tidx]
         #get all values of time where time is
 
-        ax.imshow(rates, aspect='auto')
+
         time = time/1000
-        labs = np.array([-2.0,0.0,2.0, 4.0])
+        labs = np.array([-1.0,0.0,1.0, 2.0, 3.0])
         #get indices in time where time == labs
+        ax.imshow(rates, aspect='auto')
+        #place a vertical red dashed line at t == 0
+        ax.axvline(np.where(time == 0)[0], color='red', linestyle='--')
         idx = np.where(np.isin(time, labs))[0]
         ax.set_xticks(idx)
         ax.set_xticklabels(labs)
