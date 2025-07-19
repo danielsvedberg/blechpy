@@ -18,8 +18,8 @@ import pylab as plt
 from scipy.stats import zscore
 
 plot_params = {'xtick.labelsize': 14, 'ytick.labelsize': 14,
-               'axes.titlesize': 26, 'figure.titlesize': 28,
-               'axes.labelsize': 24}
+               'axes.titlesize': 22, 'figure.titlesize': 24,
+               'axes.labelsize': 20}
 matplotlib.rcParams.update(plot_params)
 
 def make_unit_plots(file_dir, unit_name, save_dir=None):
@@ -333,40 +333,59 @@ def plot_unit_heatmaps(rec_dir, unit, din_map, save_file):
     n_tastes = len(din_map)
     dins = din_map.channel.values
     title = 'Unit %i' % unit
-    fig, axs = plt.subplots(1, n_tastes, figsize=(12,8), sharex=True, sharey=True)
+    fig, axs = plt.subplots(1, n_tastes, figsize=(8.5, 6), sharex=True, sharey=True)
+
+    # Create a placeholder for the color normalization
+    norm_min, norm_max = np.inf, -np.inf
+
     for din in dins:
         ax = axs[din]
         name = din_map.query('channel==@din').name.values[0]
         time, rates = dio.h5io.get_psths(rec_dir, unit, din)
-        #get indices where time is between -1000 and 3000
+
+        # Get indices where time is between -1000 and 3000
         tidx = np.where((time >= -1000) & (time <= 3000))[0]
         time = time[tidx]
         rates = rates[:, tidx]
-        #get all values of time where time is
 
+        time = time / 1000  # Convert time to seconds
+        labs = np.array([-1, 0, 1, 2, 3])
 
-        time = time/1000
-        labs = np.array([-1.0,0.0,1.0, 2.0, 3.0])
-        #get indices in time where time == labs
-        ax.imshow(rates, aspect='auto')
-        #place a vertical red dashed line at t == 0
+        # Normalize rates for colorbar consistency
+        norm_min = rates.min()
+        norm_max = rates.max()
+        #norm_min = min(norm_min, rates.min())
+        #norm_max = max(norm_max, rates.max())
+
+        im = ax.imshow(rates, aspect='auto', vmin=norm_min, vmax=norm_max)
+
+        # Place a vertical red dashed line at t == 0
         ax.axvline(np.where(time == 0)[0], color='red', linestyle='--')
+
         idx = np.where(np.isin(time, labs))[0]
         ax.set_xticks(idx)
         ax.set_xticklabels(labs)
         ax.set_title(name)
+
         if din == 0:
             ax.set_ylabel('Trial')
         ax.set_xlabel('Time (s)')
 
-    plt.tight_layout()
+    # Adjust layout to make space for the colorbar
+    plt.subplots_adjust(bottom=0.25)  # Make some room at the bottom for the colorbar
+
+    # Add a colorbar below all subplots spanning the entire width
+    cbar_ax = fig.add_axes([0.1, 0.1, 0.8, 0.03])  # [left, bottom, width, height]
+    cbar = fig.colorbar(im, cax=cbar_ax, orientation='horizontal')
+    cbar.set_label('Firing rate (Hz)')
+
+    #plt.tight_layout()
 
     if save_file:
         fig.savefig(save_file)
         plt.close(fig)
-        return
     else:
-        return fig, axes
+        return fig, axs
 
 
 def plot_J3s(intra_J3, inter_J3, save_dir, percent_criterion):

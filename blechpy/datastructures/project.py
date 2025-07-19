@@ -134,7 +134,13 @@ class project(data_object):
     @Logger('Removing Experiment')
     def remove_experiment(self, exp_name):
         df = self._exp_info
-        idx = df.query('exp_name == @exp_name').index
+        #if exp_name has slashes, assume it is a directory
+        if '/' in exp_name:
+            idx = df.query('exp_dir == @exp_name').index
+        else:
+            idx = df.query('exp_name == @exp_name').index
+        print('experiments to remove:')
+        print(str(idx))
         if len(idx) == 0:
             print('Tried to drop %s. Experiment not found in project' % exp_name)
         else:
