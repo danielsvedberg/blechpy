@@ -294,6 +294,100 @@ class project(data_object):
             
         Parallel(n_jobs=n_cpu-1)(delayed(load_plot_hmm)(i) for i in rec_dirs)
 
+    def consolidate_best_hmm_plots(self, mode='AIC', params=None):
+        '''
+        makes a folder in the project directory called 'best_hmm_plots' and copies the best hmm plots from each dataset directory into that folder.
+        '''
+
+        #get a list of the recordings
+        rec_info = self.get_rec_info()
+        rec_dirs = rec_info.rec_dir
+
+        def make_best_hmm_plot_folder(dir, mode, params):
+            #load the hmm handler
+            handler = phmm.HmmHandler(dir)
+            hmmplotdir = handler.plot_dir
+
+            #get the data overview table
+            data_overview = handler.get_data_overview()
+            flag = None
+            #if params is not None, filter the data_overview table by params
+            if params is not None:
+                if isinstance(params, dict):
+                    for key, value in params.items():
+                        if key in data_overview.columns:
+                            data_overview = data_overview[data_overview[key] == value]
+                        else:
+                            raise KeyError("Parameter '%s' not found in data overview." % key)
+                else:
+                    raise TypeError("params must be a dictionary.")
+                #check if n_states is in params, if so, get the n_states values from the data_overview
+                if 'n_states' in params:
+                    n_states = params['n_states']
+                    #make flag <n_states>_states
+                    flag = '%d_states' % n_states
+
+            #get the best rows for each channel
+            # if mode is 'AIC' or 'BIC':
+            if mode in ['AIC', 'BIC']:
+                if mode == 'AIC':
+                    #check if the AIC column exists
+                    if 'AIC' not in data_overview.columns:
+                        print("AIC column not found in data overview. Using BIC instead.")
+                        mode = 'BIC'
+
+                #check if params is none
+                optiflag = 'best_%s' % mode.lower()
+                if params is not None:
+                    optiflag = '%s_%s' % (optiflag, flag)
+
+                best_rows = data_overview.loc[data_overview.groupby('taste')[mode].idxmin()]
+                newfolder = optiflag + '_hmm_plots'
+                newplotdir = os.path.join(dir, newfolder)
+
+            #for each rec_dir, make a folder called 'best_hmm_plots' in the project directory
+            if not os.path.exists(newplotdir):
+                os.makedirs(newplotdir)
+
+            #get each unique taste
+            channels = best_rows['channel'].unique()
+            tastes = best_rows['taste'].unique()
+            #for each unique taste, make a subfolder in the best_hmm_dir
+            for idx, row in best_rows.iterrows():
+                taste = row['taste']
+                taste_dir = os.path.join(newplotdir, taste)
+                if not os.path.exists(taste_dir):
+                    os.makedirs(taste_dir)
+
+                # if the model is not fitted, save a txt file with a warning message
+                if row['fitted'] == False:
+                    warning_file = os.path.join(taste_dir, 'warning.txt')
+                    with open(warning_file, 'w') as f:
+                        f.write("Model for taste %s is not fitted. Please check the model." % taste)
+                    print("Model for taste %s is not fitted. Warning saved to %s" % (taste, warning_file))
+                    continue
+
+                #get the hmm_id from row
+                hmm_id = row['hmm_id']
+                #recreate the path string to the folder for the hmm_id
+                hmm_folder = os.path.join(hmmplotdir, 'hmm_%s' % hmm_id)
+
+                #double check that the folder exists, if not, throw an error
+                if not os.path.exists(hmm_folder):
+                    raise FileNotFoundError("Folder for hmm_id %s does not exist in %s" % (hmm_id, hmmplotdir))
+                #copy the contents of the hmm_folder to the taste_dir
+                for file in os.listdir(hmm_folder):
+                    source_file_path = os.path.join(hmm_folder, file)
+                    dest_file_path = os.path.join(taste_dir, file)
+                    #copy the file
+                    shutil.copy2(source_file_path, dest_file_path)
+                    print("Copied %s to %s" % (source_file_path, dest_file_path))
+
+        for dir in rec_dirs:
+            print("Processing directory: %s" % dir)
+            make_best_hmm_plot_folder(dir, mode, params)
+
+
     def export_portable_copy(self, dest_dir=None, extensions=None):
         if extensions is None:
             extensions = ['.hdf5', '.p', '.h5', '.log']
