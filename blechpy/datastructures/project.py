@@ -309,7 +309,7 @@ class project(data_object):
             hmmplotdir = handler.plot_dir
 
             #get the data overview table
-            data_overview = handler.get_data_overview()
+            data_overview = handler.get_overview_w_AIC()
             flag = None
             #if params is not None, filter the data_overview table by params
             if params is not None:
