@@ -375,9 +375,13 @@ class project(data_object):
                 #double check that the folder exists, if not, throw an error
                 if not os.path.exists(hmm_folder):
                     raise FileNotFoundError("Folder for hmm_id %s does not exist in %s" % (hmm_id, hmmplotdir))
+                #check that the folder is not empty
+                if not os.listdir(hmm_folder):
+                    raise FileNotFoundError("Folder for hmm_id %s is empty in %s" % (hmm_id, hmmplotdir))
                 #copy the contents of the hmm_folder to the taste_dir
                 for file in os.listdir(hmm_folder):
                     source_file_path = os.path.join(hmm_folder, file)
+
                     dest_file_path = os.path.join(taste_dir, file)
                     #copy the file
                     shutil.copy2(source_file_path, dest_file_path)
