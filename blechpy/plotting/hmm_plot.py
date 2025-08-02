@@ -3,10 +3,12 @@ import numpy as np
 import pandas as pd
 from scipy.ndimage import gaussian_filter1d
 import matplotlib
-matplotlib.use('TkAgg')
+
+#matplotlib.use('TkAgg')
 import pylab as plt
 import seaborn as sns
 
+plt.rcParams['font.family'] = 'Arial'
 
 
 def get_sequence_windows(seq):
@@ -71,6 +73,12 @@ def plot_raster(spikes, time=None, ax=None, y_min=0.05, y_max=0.95):
         2D matrix M x N where N is the number of time steps and in each bin is
         a 0 or 1, with 1 signifying the presence of a spike
     '''
+
+    ms = rcParams['lines.markersize'] ** 2
+    ms = ms/5
+    lw = rcParams['lines.linewidth']
+    lw = lw/5
+
     if not ax:
         _, ax = plt.gca()
 
@@ -84,7 +92,8 @@ def plot_raster(spikes, time=None, ax=None, y_min=0.05, y_max=0.95):
         if len(idx) == 0:
             continue
 
-        ax.scatter(time[idx], row[idx]*y_steps[i], color='black', marker='|')
+        ax.scatter(time[idx], row[idx]*y_steps[i], color='black', marker='|',
+                   s=ms, linewidth=lw)
 
     return ax
 
@@ -109,7 +118,7 @@ def make_hmm_raster(spikes, time=None, save_file=None):
     if time is None:
         time = np.arange(0, n_steps)
 
-    fig, axes = plt.subplots(nrows=n_trials, figsize=(15, n_trials))
+    fig, axes = plt.subplots(nrows=n_trials, figsize=(3, n_trials/5))
     y_step = np.linspace(0.05, 0.95, n_cells)
 
     counter = 1
@@ -124,17 +133,17 @@ def make_hmm_raster(spikes, time=None, save_file=None):
         ax.get_xaxis().set_visible(False)
         ax.set_ylabel(str(counter), labelpad=-1)
         if time[0] < 0:
-            ax.axvline(0, color='red', linestyle='--', linewidth=5, alpha=0.8)
+            ax.axvline(0, color='white', linestyle='--', linewidth=1, alpha=0.8)
 
         counter = counter + 1
 
     axes[-1].get_xaxis().set_visible(True)
-    axes[-1].xaxis.set_tick_params(labelsize=25)
+    axes[-1].xaxis.set_tick_params(labelsize=8)
     tmp_ax = fig.add_subplot('111', frameon=False)
     tmp_ax.tick_params(labelcolor='none', top=False, bottom=False,
                        left=False, right=False)
-    tmp_ax.set_ylabel('Trial', fontsize=35)
-    axes[-1].set_xlabel('Time', fontsize=35)
+    tmp_ax.set_ylabel('Trial', fontsize=8)
+    axes[-1].set_xlabel('Time', fontsize=8)
     #axes[-1].set_ylabel('Cells', fontsize=50)
     
     fig.tight_layout()
@@ -209,14 +218,14 @@ def plot_viterbi_paths(hmm, spikes, time=None, colors=None, axes=None, legend=Tr
         mid = int(n_trials/2)
         axes[-1].legend(handles, labels, loc='upper center',
                          bbox_to_anchor=(0.5, -2), shadow=True,
-                         fontsize="30", ncol = len(labels))
+                         fontsize="8", ncol = len(labels))
 
     axes[-1].set_xlabel('Time (ms)')
     title_str = 'Decoded HMM Sequences'
     if hmm_id:
         title_str += '\n%s' % hmm_id
 
-    axes[0].set_title(title_str, fontsize=40)
+    axes[0].set_title(title_str, fontsize=8)
     if save_file:
         fig.savefig(save_file)
         plt.close(fig)
@@ -296,14 +305,14 @@ def plot_forward_probs(hmm, spikes, dt, time=None, colors=None, axes=None, legen
         mid = int(n_trials/2)
         axes[-1].legend(handles, labels, loc='upper center',
                          bbox_to_anchor=(0.5, -2), shadow=True,
-                         fontsize="30", ncol=len(labels))
+                         fontsize="8", ncol=len(labels))
 
     axes[-1].set_xlabel('Time (ms)')
     title_str = 'HMM Forward Probabilities'
     if hmm_id:
         title_str += '\n%s' % hmm_id
 
-    axes[0].set_title(title_str,fontsize=40)
+    axes[0].set_title(title_str,fontsize=8)
     if save_file:
         fig.savefig(save_file)
         plt.close(fig)
@@ -347,14 +356,14 @@ def plot_backward_probs(hmm, spikes, dt, time=None, colors=None, axes=None, lege
         mid = int(n_trials/2)
         axes[-1].legend(handles, labels, loc='upper center',
                          bbox_to_anchor=(0.5, -2), shadow=True,
-                         fontsize="30", ncol = len(labels))
+                         fontsize="8", ncol = len(labels))
 
     axes[-1].set_xlabel('Time (ms)')
     title_str = 'HMM Backward Probabilities'
     if hmm_id:
         title_str += '\n%s' % hmm_id
 
-    axes[0].set_title(title_str, fontsize=40)
+    axes[0].set_title(title_str, fontsize=8)
     if save_file:
         fig.savefig(save_file)
         plt.close(fig)
@@ -404,14 +413,14 @@ def plot_gamma_probs(hmm, spikes=None, dt=None, time=None, colors=None, axes=Non
         mid = int(n_trials/2)
         axes[-1].legend(handles, labels, loc='upper center',
                          bbox_to_anchor=(0.5, -2), shadow=True,
-                         fontsize="30", ncol = len(labels))
+                         fontsize="8", ncol = len(labels))
 
     axes[-1].set_xlabel('Time (ms)')
     title_str = 'HMM Gamma Probabilities'
     if hmm_id:
         title_str += '\n%s' % hmm_id
 
-    axes[0].set_title(title_str, fontsize=40)
+    axes[0].set_title(title_str, fontsize=8)
     if save_file:
         fig.savefig(save_file)
         return
