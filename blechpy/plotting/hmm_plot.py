@@ -75,7 +75,7 @@ def plot_raster(spikes, time=None, ax=None, y_min=0.05, y_max=0.95):
     '''
 
     ms = plt.rcParams['lines.markersize'] ** 2
-    ms = ms/5
+    ms = ms/10
     lw = plt.rcParams['lines.linewidth']
     lw = lw/5
 
