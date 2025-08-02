@@ -265,7 +265,7 @@ def plot_probability_traces(traces, time=None, ax=None, colors=None, thresh=0.75
         if smoothing:
             tmp = gaussian_filter1d(tmp, smoothing)
 
-        ax.plot(time, tmp, color=col, linewidth=2)
+        ax.plot(time, tmp, color=col, linewidth=1)
 
     return ax, leg_handles, leg_labels
 
