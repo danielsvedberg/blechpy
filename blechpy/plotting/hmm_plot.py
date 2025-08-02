@@ -131,7 +131,7 @@ def make_hmm_raster(spikes, time=None, save_file=None):
         ax.set_yticks([])
         #ax.get_yaxis().set_visible(False)
         ax.get_xaxis().set_visible(False)
-        ax.set_ylabel(str(counter), labelpad=-1)
+        ax.set_ylabel(str(counter), labelpad=-1, fontsize=8) # labels the row with the trial number
         if time[0] < 0:
             ax.axvline(0, color='white', linestyle='--', linewidth=1, alpha=0.8)
 
