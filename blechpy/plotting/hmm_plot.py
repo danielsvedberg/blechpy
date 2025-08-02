@@ -212,7 +212,7 @@ def plot_viterbi_paths(hmm, spikes, time=None, colors=None, axes=None, legend=Tr
                 labels.append(l)
 
         if time[0] != 0:
-            ax.axvline(0, color='red', linestyle='--', linewidth=3, alpha=0.8)
+            ax.axvline(0, color='white', linestyle='--', linewidth=1, alpha=0.8)
 
     if legend:
         mid = int(n_trials/2)
@@ -299,7 +299,7 @@ def plot_forward_probs(hmm, spikes, dt, time=None, colors=None, axes=None, legen
                 labels.append(l)
 
     if time[0] != 0:
-        ax.axvline(0, color='red', linestyle='--', linewidth=3, alpha=0.8)
+        ax.axvline(0, color='white', linestyle='--', linewidth=1, alpha=0.8)
 
     if legend:
         mid = int(n_trials/2)
@@ -350,7 +350,7 @@ def plot_backward_probs(hmm, spikes, dt, time=None, colors=None, axes=None, lege
                 labels.append(l)
 
     if time[0] != 0:
-        ax.axvline(0, color='red', linestyle='--', linewidth=3, alpha=0.8)
+        ax.axvline(0, color='white', linestyle='--', linewidth=1, alpha=0.8)
 
     if legend:
         mid = int(n_trials/2)
@@ -407,7 +407,7 @@ def plot_gamma_probs(hmm, spikes=None, dt=None, time=None, colors=None, axes=Non
                 labels.append(l)
 
     if time[0] != 0:
-        ax.axvline(0, color='red', linestyle='--', linewidth=3, alpha=0.8)
+        ax.axvline(0, color='white', linestyle='--', linewidth=1, alpha=0.8)
 
     if legend:
         mid = int(n_trials/2)
