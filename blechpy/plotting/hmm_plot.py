@@ -74,9 +74,9 @@ def plot_raster(spikes, time=None, ax=None, y_min=0.05, y_max=0.95):
         a 0 or 1, with 1 signifying the presence of a spike
     '''
 
-    ms = rcParams['lines.markersize'] ** 2
+    ms = plt.rcParams['lines.markersize'] ** 2
     ms = ms/5
-    lw = rcParams['lines.linewidth']
+    lw = plt.rcParams['lines.linewidth']
     lw = lw/5
 
     if not ax:
