@@ -220,7 +220,7 @@ def plot_viterbi_paths(hmm, spikes, time=None, colors=None, axes=None, legend=Tr
                          bbox_to_anchor=(0.5, -2), shadow=True,
                          fontsize="8", ncol = len(labels))
 
-    axes[-1].set_xlabel('Time (ms)')
+    axes[-1].set_xlabel('Time (s)')
     title_str = 'Decoded HMM Sequences'
     if hmm_id:
         title_str += '\n%s' % hmm_id
@@ -307,7 +307,7 @@ def plot_forward_probs(hmm, spikes, dt, time=None, colors=None, axes=None, legen
                          bbox_to_anchor=(0.5, -2), shadow=True,
                          fontsize="8", ncol=len(labels))
 
-    axes[-1].set_xlabel('Time (ms)')
+    axes[-1].set_xlabel('Time (s)')
     title_str = 'HMM Forward Probabilities'
     if hmm_id:
         title_str += '\n%s' % hmm_id
@@ -358,7 +358,7 @@ def plot_backward_probs(hmm, spikes, dt, time=None, colors=None, axes=None, lege
                          bbox_to_anchor=(0.5, -2), shadow=True,
                          fontsize="8", ncol = len(labels))
 
-    axes[-1].set_xlabel('Time (ms)')
+    axes[-1].set_xlabel('Time (s)')
     title_str = 'HMM Backward Probabilities'
     if hmm_id:
         title_str += '\n%s' % hmm_id
@@ -415,7 +415,7 @@ def plot_gamma_probs(hmm, spikes=None, dt=None, time=None, colors=None, axes=Non
                          bbox_to_anchor=(0.5, -2), shadow=True,
                          fontsize="8", ncol = len(labels))
 
-    axes[-1].set_xlabel('Time (ms)')
+    axes[-1].set_xlabel('Time (s)')
     title_str = 'HMM Gamma Probabilities'
     if hmm_id:
         title_str += '\n%s' % hmm_id
@@ -544,6 +544,9 @@ def plot_hmm_overview(hmm, colors=None, hmm_id=None, save_file=None):
 
 
 def plot_hmm_figures(hmm, spikes, dt, time, hmm_id=None, save_dir=None, file_ext='svg'):
+
+    time = time/1000
+
     colors = get_hmm_plot_colors(hmm.n_states)
     if hmm_id is None:
         hmm_id = hmm.hmm_id
